@@ -1,12 +1,23 @@
 import React, { useEffect, useState } from "react";
-import { drawCanvasToCanvas, drawStretchCanvas } from "../../helpers/helpers";
+import {
+  drawCanvasToCanvas,
+  drawStretchCanvas,
+  getRandomColAndRowFractions,
+} from "../../helpers/helpers";
 
 export default function Artwork({ sourceImg, frameCount }) {
+  const [randomSizes, setRandomSizes] = useState(null);
   const [doDoubleScan, setDoDoubleScan] = useState(true);
   const experimentCanvasRef = React.useRef(null);
 
   useEffect(() => {
-    if (!sourceImg || !experimentCanvasRef) return;
+    if (!randomSizes) {
+      setRandomSizes(getRandomColAndRowFractions(5, 5));
+    }
+  }, [randomSizes]);
+
+  useEffect(() => {
+    if (!sourceImg || !experimentCanvasRef || !randomSizes) return;
 
     const expDisplayCanvas = experimentCanvasRef.current;
 
@@ -16,6 +27,7 @@ export default function Artwork({ sourceImg, frameCount }) {
       targStretchH: 300,
       srcStretchW: 100,
       srcStretchH: 100,
+      randomSizes,
     };
 
     const stretchCanvas = drawStretchCanvas(stretchProps);
@@ -28,7 +40,7 @@ export default function Artwork({ sourceImg, frameCount }) {
     );
 
     // eslint-disable-next-line
-  }, [sourceImg, frameCount]);
+  }, [sourceImg, frameCount, randomSizes]);
 
   // const setVolume = (vol) => {
   //   console.log('vol: ', vol)

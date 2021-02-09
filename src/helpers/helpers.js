@@ -57,6 +57,7 @@ export function drawStretchCanvas({
   targStretchH = 300,
   srcStretchW = 100,
   srcStretchH = 100,
+  randomSizes,
   rows = 5,
   cols = 5,
 }) {
@@ -68,8 +69,10 @@ export function drawStretchCanvas({
 
   const ctx = outCanvas.getContext("2d");
 
+  const { rowHeights, colWidths } = randomSizes;
+
   const srcData = getSrcData(srcW, srcH, cols, rows);
-  const targData = getTargData(srcW, srcH, cols, rows);
+  const targData = getTargData(srcW, srcH, rowHeights, colWidths);
 
   // draw middle middle stretch
   for (let i = 0; i < srcData.length; i++) {
@@ -100,33 +103,59 @@ function getSrcData(w, h, cols, rows) {
   return data;
 }
 
-function getTargData(w, h, cols, rows) {
+export function getRandomColAndRowFractions(cols, rows) {
+  const rowHeights = [];
+  const colWidths = [];
+
+  const minHeight = 0.3;
+  const maxHeight = 1.5;
+
+  const minWidth = 0.2;
+  const maxWidth = 2;
+
+  for (let r = 0; r < rows; r++) {
+    rowHeights.push(getConstrainedRandom(minHeight, maxHeight));
+  }
+
+  for (let c = 0; c < cols; c++) {
+    colWidths.push(getConstrainedRandom(minWidth, maxWidth));
+  }
+
+  return { rowHeights, colWidths };
+}
+
+function getConstrainedRandom(min, max) {
+  return Math.random() * (max - min) + min;
+}
+
+function getTargData(w, h, colWidths, rowHeights) {
   const data = [];
+
+  const cols = colWidths.length;
+  const rows = rowHeights.length;
 
   // add x, y, w, h for each segment
   const srcCellWidth = w / cols;
   const srcCellHeight = h / rows;
 
-  const minWidth = srcCellWidth / 3;
-  const maxWidth = srcCellWidth * 3;
-
-  const diff = maxWidth - minWidth;
-  const inc = diff / cols;
-
+  let yPos = 0;
   for (let r = 0; r < rows; r++) {
-    let width = minWidth;
+    let height = rowHeights[r] * srcCellHeight;
+
     let xPos = 0;
     for (let c = 0; c < cols; c++) {
+      let width = colWidths[c] * srcCellWidth;
       data.push({
         x: xPos,
-        y: r * srcCellHeight,
+        y: yPos,
         w: width,
-        h: srcCellHeight,
+        h: height,
       });
 
       xPos += width;
-      width += inc;
     }
+
+    yPos += height;
   }
 
   return data;
