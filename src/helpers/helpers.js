@@ -51,51 +51,37 @@ export const drawCanvasToCanvas = (
   }
 };
 
-export function drawStretchCanvas({
+export function createStretchCanvas({
   sourceCanvas,
-  targStretchW = 300,
-  targStretchH = 300,
-  srcStretchW = 100,
-  srcStretchH = 100,
-  randomSizes,
-  rows = 5,
-  cols = 5,
+  srcCells,
+  targCells,
+  canvasW,
+  canvasH,
 }) {
   const outCanvas = document.createElement("canvas");
-  const { width: srcW, height: srcH } = sourceCanvas;
 
-  outCanvas.width = srcW + targStretchW - srcStretchW;
-  outCanvas.height = srcH + targStretchH - srcStretchH;
+  outCanvas.width = canvasW;
+  outCanvas.height = canvasH;
 
   const ctx = outCanvas.getContext("2d");
 
-  const { rowHeights, colWidths } = randomSizes;
-
-  const srcData = getSrcData(srcW, srcH, cols, rows);
-  const targData = getTargData(srcW, srcH, rowHeights, colWidths);
-
   // draw middle middle stretch
-  for (let i = 0; i < srcData.length; i++) {
-    drawSegment(sourceCanvas, ctx, srcData[i], targData[i]);
+  for (let i = 0; i < srcCells.length; i++) {
+    drawSegment(sourceCanvas, ctx, srcCells[i], targCells[i]);
   }
 
   return outCanvas;
 }
 
-function getSrcData(w, h, cols, rows) {
+export function getSourceCells(cellSize, cols, rows) {
   const data = [];
-
-  // add x, y, w, h for each segment
-  const cellWidth = w / cols;
-  const cellHeight = h / rows;
-
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
       data.push({
-        x: c * (cellWidth + 1),
-        y: r * (cellHeight + 2),
-        w: cellWidth,
-        h: cellHeight,
+        x: c * cellSize.w,
+        y: r * cellSize.h,
+        w: cellSize.w,
+        h: cellSize.h,
       });
     }
   }
@@ -110,8 +96,8 @@ export function getRandomColAndRowFractions(cols, rows) {
   const minHeight = 0.3;
   const maxHeight = 1.5;
 
-  const minWidth = 0.2;
-  const maxWidth = 2;
+  const minWidth = 0.3;
+  const maxWidth = 1.5;
 
   for (let r = 0; r < rows; r++) {
     rowHeights.push(getConstrainedRandom(minHeight, maxHeight));
@@ -124,41 +110,144 @@ export function getRandomColAndRowFractions(cols, rows) {
   return { rowHeights, colWidths };
 }
 
+//
+// GET Initial sizes
+//
+
+export function getColAndRowSizes(cellSize, randomSizes, tick) {
+  const cols = randomSizes.colWidths;
+  const rows = randomSizes.rowHeights;
+
+  const rowHeights = [];
+  const colWidths = [];
+
+  const minHeight = 0.3 * cellSize.h;
+  const maxHeight = 1.5 * cellSize.h;
+
+  const minWidth = 0.3 * cellSize.w;
+  const maxWidth = 1.5 * cellSize.w;
+
+  for (let r = 0; r < rows.length; r++) {
+    rowHeights.push(getConstrainedRandom(minHeight, maxHeight));
+  }
+
+  for (let c = 0; c < cols.length; c++) {
+    colWidths.push(getConstrainedRandom(minWidth, maxWidth));
+  }
+
+  return { rowHeights, colWidths };
+}
+
+export function getRandomColAndRowSizes(cellSize, cols, rows, setSize = 0.2) {
+  const rowHeights = [];
+  const colWidths = [];
+
+  const minHeight = 0.3 * cellSize.h;
+  const maxHeight = 1.5 * cellSize.h;
+
+  const minWidth = 0.3 * cellSize.w;
+  const maxWidth = 1.5 * cellSize.w;
+
+  for (let r = 0; r < rows; r++) {
+    const randomStartHeight = getConstrainedRandomInteger(minHeight, maxHeight);
+    const startInc = randomStartHeight < maxHeight / 2 ? setSize : -setSize;
+
+    rowHeights.push({ h: randomStartHeight, inc: startInc });
+  }
+
+  for (let c = 0; c < cols; c++) {
+    const randomStartWidth = getConstrainedRandomInteger(minWidth, maxWidth);
+    const startInc = randomStartWidth < maxWidth ? setSize : -setSize;
+
+    colWidths.push({ w: randomStartWidth, inc: startInc });
+  }
+
+  return {
+    rowHeights,
+    colWidths,
+    cellSize,
+    minHeight,
+    maxHeight,
+    minWidth,
+    maxWidth,
+  };
+}
+
+export function getNextColAndRowSizes(currColAndRowSizes, setSize = 0.2) {
+  const {
+    colWidths: prevColWidths,
+    rowHeights: prevRowHeights,
+    minHeight,
+    maxHeight,
+    minWidth,
+    maxWidth,
+  } = currColAndRowSizes;
+
+  const rowHeights = [];
+  const colWidths = [];
+
+  for (let r = 0; r < prevRowHeights.length; r++) {
+    const { h, inc } = prevRowHeights[r];
+
+    // reverse the increment if reach bounds
+    let newInc = inc;
+    if (h + inc > maxHeight) newInc = -setSize;
+    if (h + inc < minHeight) newInc = setSize;
+
+    rowHeights.push({ h: h + newInc, inc: newInc });
+  }
+
+  for (let c = 0; c < prevColWidths.length; c++) {
+    const { w, inc } = prevColWidths[c];
+
+    // reverse the increment if reach bounds
+    let newInc = inc;
+    if (w + inc > maxWidth) newInc = -setSize;
+    if (w + inc < minWidth) newInc = setSize;
+
+    colWidths.push({ w: w + newInc, inc: newInc });
+  }
+
+  return { ...currColAndRowSizes, colWidths, rowHeights };
+}
+
+export function getTargCells(colAndRowSizes) {
+  const { colWidths, rowHeights } = colAndRowSizes;
+
+  const data = [];
+
+  let yPos = 0;
+  for (let r = 0; r < rowHeights.length; r++) {
+    let xPos = 0;
+    const currHeight = rowHeights[r].h;
+
+    for (let c = 0; c < colWidths.length; c++) {
+      const currWidth = colWidths[c].w;
+
+      data.push({
+        x: xPos,
+        y: yPos,
+        w: currWidth,
+        h: currHeight,
+      });
+
+      xPos += currWidth;
+    }
+
+    yPos += currHeight;
+  }
+
+  return data;
+}
+
+// float
 function getConstrainedRandom(min, max) {
   return Math.random() * (max - min) + min;
 }
 
-function getTargData(w, h, colWidths, rowHeights) {
-  const data = [];
-
-  const cols = colWidths.length;
-  const rows = rowHeights.length;
-
-  // add x, y, w, h for each segment
-  const srcCellWidth = w / cols;
-  const srcCellHeight = h / rows;
-
-  let yPos = 0;
-  for (let r = 0; r < rows; r++) {
-    let height = rowHeights[r] * srcCellHeight;
-
-    let xPos = 0;
-    for (let c = 0; c < cols; c++) {
-      let width = colWidths[c] * srcCellWidth;
-      data.push({
-        x: xPos,
-        y: yPos,
-        w: width,
-        h: height,
-      });
-
-      xPos += width;
-    }
-
-    yPos += height;
-  }
-
-  return data;
+// no decimals option
+function getConstrainedRandomInteger(min, max) {
+  return Math.round(getConstrainedRandom(min, max));
 }
 
 function drawSegment(img, ctx, src, targ) {
@@ -173,6 +262,9 @@ function drawSegment(img, ctx, src, targ) {
     targ.w,
     targ.h
   );
+
+  // ctx.strokeStyle = "#fff";
+  // ctx.strokeRect(targ.x, targ.y, targ.w, targ.h);
 }
 
 export const createInkCanvas = (inputCanvas) => {

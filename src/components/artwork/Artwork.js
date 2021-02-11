@@ -1,36 +1,71 @@
 import React, { useEffect, useState } from "react";
+import styles from "./artwork.module.css";
 import {
   drawCanvasToCanvas,
-  drawStretchCanvas,
-  getRandomColAndRowFractions,
+  createStretchCanvas,
+  getTargCells,
+  getSourceCells,
+  getRandomColAndRowSizes,
+  getNextColAndRowSizes,
 } from "../../helpers/helpers";
 
-export default function Artwork({ sourceImg, frameCount }) {
-  const [randomSizes, setRandomSizes] = useState(null);
+const cols = 10;
+const rows = 7;
+
+export default function Artwork({ sourceImg, frameCount, animationTimer }) {
+  const [targColAndRowSizes, setTargColsAndRowSizes] = useState(null);
+  const [srcCells, setSrcCells] = useState(null);
   const [doDoubleScan, setDoDoubleScan] = useState(true);
   const experimentCanvasRef = React.useRef(null);
 
   useEffect(() => {
-    if (!randomSizes) {
-      setRandomSizes(getRandomColAndRowFractions(5, 5));
+    if (!sourceImg) return;
+
+    // Set starting col and row sizes
+    if (!srcCells) {
+      const { width, height } = sourceImg;
+      const cellSize = {
+        w: Math.round(width / cols),
+        h: Math.round(height / rows),
+      };
+
+      setSrcCells(getSourceCells(cellSize, cols, rows));
+
+      const init = getRandomColAndRowSizes(cellSize, cols, rows);
+
+      setTargColsAndRowSizes(init);
+    } else {
+      setTargColsAndRowSizes(getNextColAndRowSizes(targColAndRowSizes));
     }
-  }, [randomSizes]);
+
+    // eslint-disable-next-line
+  }, [animationTimer.tick]);
 
   useEffect(() => {
-    if (!sourceImg || !experimentCanvasRef || !randomSizes) return;
+    if (!sourceImg || !experimentCanvasRef || !srcCells || !targColAndRowSizes)
+      return;
 
     const expDisplayCanvas = experimentCanvasRef.current;
 
-    const stretchProps = {
-      sourceCanvas: sourceImg,
-      targStretchW: 300,
-      targStretchH: 300,
-      srcStretchW: 100,
-      srcStretchH: 100,
-      randomSizes,
-    };
+    let targCanvasWidth = 0;
+    for (let wData of targColAndRowSizes.colWidths) {
+      targCanvasWidth += wData.w;
+    }
+    let targCanvasHeight = 0;
+    for (let hData of targColAndRowSizes.rowHeights) {
+      targCanvasHeight += hData.h;
+    }
 
-    const stretchCanvas = drawStretchCanvas(stretchProps);
+    const targCells = getTargCells(targColAndRowSizes);
+
+    const stretchCanvas = createStretchCanvas({
+      sourceCanvas: sourceImg,
+      srcCells,
+      targCells,
+      canvasW: parseInt(targCanvasWidth, 0),
+      canvasH: parseInt(targCanvasHeight, 0),
+    });
+
     drawCanvasToCanvas(
       stretchCanvas,
       expDisplayCanvas,
@@ -40,14 +75,13 @@ export default function Artwork({ sourceImg, frameCount }) {
     );
 
     // eslint-disable-next-line
-  }, [sourceImg, frameCount, randomSizes]);
-
-  // const setVolume = (vol) => {
-  //   console.log('vol: ', vol)
-  // };
+  }, [frameCount]);
 
   return (
-    <div onClick={() => setDoDoubleScan(!doDoubleScan)}>
+    <div
+      className={styles.artwork}
+      onClick={() => setDoDoubleScan(!doDoubleScan)}
+    >
       <canvas ref={experimentCanvasRef} />
     </div>
   );

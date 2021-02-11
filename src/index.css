@@ -6,3 +6,7 @@ body {
 
   /* cursor: none; */
 }
+
+canvas {
+  border-radius: 42px;
+}
