@@ -138,26 +138,33 @@ export function getColAndRowSizes(cellSize, randomSizes, tick) {
   return { rowHeights, colWidths };
 }
 
-export function getRandomColAndRowSizes(cellSize, cols, rows, setSize = 0.2) {
+export function getRandomColAndRowSizes({
+  cellSize,
+  cols,
+  rows,
+  incSize = 0.2,
+  min = 0.3,
+  max = 1.5,
+}) {
   const rowHeights = [];
   const colWidths = [];
 
-  const minHeight = 0.3 * cellSize.h;
-  const maxHeight = 1.5 * cellSize.h;
+  const minHeight = min * cellSize.h;
+  const maxHeight = max * cellSize.h;
 
-  const minWidth = 0.3 * cellSize.w;
-  const maxWidth = 1.5 * cellSize.w;
+  const minWidth = min * cellSize.w;
+  const maxWidth = max * cellSize.w;
 
   for (let r = 0; r < rows; r++) {
     const randomStartHeight = getConstrainedRandomInteger(minHeight, maxHeight);
-    const startInc = randomStartHeight < maxHeight / 2 ? setSize : -setSize;
+    const startInc = randomStartHeight < maxHeight / 2 ? incSize : -incSize;
 
     rowHeights.push({ h: randomStartHeight, inc: startInc });
   }
 
   for (let c = 0; c < cols; c++) {
     const randomStartWidth = getConstrainedRandomInteger(minWidth, maxWidth);
-    const startInc = randomStartWidth < maxWidth ? setSize : -setSize;
+    const startInc = randomStartWidth < maxWidth ? incSize : -incSize;
 
     colWidths.push({ w: randomStartWidth, inc: startInc });
   }
@@ -173,7 +180,7 @@ export function getRandomColAndRowSizes(cellSize, cols, rows, setSize = 0.2) {
   };
 }
 
-export function getNextColAndRowSizes(currColAndRowSizes, setSize = 0.2) {
+export function getNextColAndRowSizes(currColAndRowSizes, incSize = 0.2) {
   const {
     colWidths: prevColWidths,
     rowHeights: prevRowHeights,
@@ -191,8 +198,8 @@ export function getNextColAndRowSizes(currColAndRowSizes, setSize = 0.2) {
 
     // reverse the increment if reach bounds
     let newInc = inc;
-    if (h + inc > maxHeight) newInc = -setSize;
-    if (h + inc < minHeight) newInc = setSize;
+    if (h + inc > maxHeight) newInc = -incSize;
+    if (h + inc < minHeight) newInc = incSize;
 
     rowHeights.push({ h: h + newInc, inc: newInc });
   }
@@ -202,8 +209,8 @@ export function getNextColAndRowSizes(currColAndRowSizes, setSize = 0.2) {
 
     // reverse the increment if reach bounds
     let newInc = inc;
-    if (w + inc > maxWidth) newInc = -setSize;
-    if (w + inc < minWidth) newInc = setSize;
+    if (w + inc > maxWidth) newInc = -incSize;
+    if (w + inc < minWidth) newInc = incSize;
 
     colWidths.push({ w: w + newInc, inc: newInc });
   }

@@ -11,6 +11,9 @@ import {
 
 const cols = 42;
 const rows = 42;
+const min = 0.5; // smallest fraction of source size
+const max = 2.0; // largest fraction of source size
+const incSize = 0.1; // smaller = slower
 
 export default function Artwork({ sourceImg, frameCount, animationTimer }) {
   const [targColAndRowSizes, setTargColsAndRowSizes] = useState(null);
@@ -31,7 +34,14 @@ export default function Artwork({ sourceImg, frameCount, animationTimer }) {
 
       setSrcCells(getSourceCells(cellSize, cols, rows));
 
-      const init = getRandomColAndRowSizes(cellSize, cols, rows);
+      const init = getRandomColAndRowSizes({
+        cellSize,
+        cols,
+        rows,
+        incSize,
+        min,
+        max,
+      });
 
       setTargColsAndRowSizes(init);
     } else {
