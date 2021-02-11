@@ -9,8 +9,8 @@ import {
   getNextColAndRowSizes,
 } from "../../helpers/helpers";
 
-const cols = 10;
-const rows = 7;
+const cols = 42;
+const rows = 42;
 
 export default function Artwork({ sourceImg, frameCount, animationTimer }) {
   const [targColAndRowSizes, setTargColsAndRowSizes] = useState(null);
@@ -39,7 +39,7 @@ export default function Artwork({ sourceImg, frameCount, animationTimer }) {
     }
 
     // eslint-disable-next-line
-  }, [animationTimer.tick]);
+  }, [animationTimer]);
 
   useEffect(() => {
     if (!sourceImg || !experimentCanvasRef || !srcCells || !targColAndRowSizes)

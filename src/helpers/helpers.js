@@ -250,7 +250,7 @@ function getConstrainedRandomInteger(min, max) {
   return Math.round(getConstrainedRandom(min, max));
 }
 
-function drawSegment(img, ctx, src, targ) {
+function drawSegment(img, ctx, src, targ, showBorder = false) {
   ctx.drawImage(
     img,
     src.x,
@@ -263,8 +263,10 @@ function drawSegment(img, ctx, src, targ) {
     targ.h
   );
 
-  // ctx.strokeStyle = "#fff";
-  // ctx.strokeRect(targ.x, targ.y, targ.w, targ.h);
+  if (showBorder) {
+    ctx.strokeStyle = "#fff";
+    ctx.strokeRect(targ.x, targ.y, targ.w, targ.h);
+  }
 }
 
 export const createInkCanvas = (inputCanvas) => {
