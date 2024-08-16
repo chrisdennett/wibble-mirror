@@ -9,11 +9,11 @@ import {
   getNextColAndRowSizes,
 } from "../../helpers/helpers";
 
-const cols = 42;
-const rows = 42;
-const min = 0.5; // smallest fraction of source size
-const max = 2.0; // largest fraction of source size
-const incSize = 0.1; // smaller = slower
+const cols = 20;
+const rows = 20;
+const min = 0.2; // smallest fraction of source size
+const max = 3.0; // largest fraction of source size
+const incSize = 0.8; // smaller = slower
 
 export default function Artwork({ sourceImg, frameCount, animationTimer }) {
   const [targColAndRowSizes, setTargColsAndRowSizes] = useState(null);
